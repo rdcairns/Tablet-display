@@ -69,7 +69,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     padding: 20px 40px;
     border-right: none;
     border-bottom: 1px solid rgba(255,255,255,0.07);
@@ -77,7 +77,7 @@
 
   .time {
     font-family: 'Playfair Display', serif;
-    font-size: clamp(60px, 10vw, 100px);
+    font-size: clamp(75px, 12.5vw, 125px);
     font-weight: 400;
     letter-spacing: -2px;
     color: #ffffff;
@@ -97,7 +97,7 @@
 
   .date {
     margin-top: 16px;
-    font-size: clamp(14px, 2vw, 20px);
+    font-size: clamp(40px, 5.6vw, 56px);
     font-weight: 300;
     color: rgba(255,255,255,0.75);
     letter-spacing: 3px;
@@ -235,11 +235,12 @@
 <div class="layout">
   <!-- Clock -->
   <div class="left">
-    <div class="time">
-      <span id="hours">12</span>:<span id="minutes">00</span><span class="ampm" id="ampm">AM</span>
+    <div style="display:flex;align-items:center;gap:24px;width:100%;justify-content:space-between;">
+      <div class="time">
+        <span id="hours">12</span>:<span id="minutes">00</span><span class="ampm" id="ampm">AM</span>
+      </div>
+      <div class="date" id="date" style="text-align:right;">Monday, January 1</div>
     </div>
-    <div class="divider"></div>
-    <div class="date" id="date">Monday, January 1</div>
   </div>
 
   <!-- Calendar -->
@@ -274,8 +275,9 @@
     document.getElementById('ampm').textContent = ampm;
     const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
     const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    document.getElementById('date').textContent =
-      days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+    document.getElementById('date').innerHTML =
+      '<span style="display:block">' + days[now.getDay()] + '</span>' +
+      '<span style="display:block">' + months[now.getMonth()] + ' ' + now.getDate() + '</span>';
   }
   updateClock();
   setInterval(updateClock, 1000);
