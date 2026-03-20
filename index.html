@@ -1,1 +1,466 @@
-<h1>test</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Display</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&family=Playfair+Display:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0e1a;
+    color: #e8eaf0;
+    font-family: 'Outfit', sans-serif;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Background photo */
+  #bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: opacity 2s ease-in-out;
+    z-index: 0;
+  }
+
+  #bg-next {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    z-index: 1;
+  }
+
+  /* Dark overlay for readability */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(0,0,0,0.65) 0%,
+      rgba(0,0,0,0.3) 50%,
+      rgba(0,0,0,0.55) 100%
+    );
+    z-index: 2;
+  }
+
+  /* Main layout */
+  .layout {
+    position: relative;
+    z-index: 3;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* LEFT: Clock */
+  .left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+  }
+
+  .time {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(80px, 13vw, 130px);
+    font-weight: 400;
+    letter-spacing: -2px;
+    color: #ffffff;
+    line-height: 1;
+    text-align: center;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+  }
+
+  .ampm {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 200;
+    color: #90cdf4;
+    margin-left: 8px;
+    vertical-align: super;
+  }
+
+  .date {
+    margin-top: 16px;
+    font-size: clamp(14px, 2vw, 20px);
+    font-weight: 300;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: rgba(144,205,244,0.5);
+    margin: 20px auto;
+  }
+
+  /* RIGHT: Calendar */
+  .right {
+    display: flex;
+    flex-direction: column;
+    padding: 36px 32px;
+    overflow: hidden;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #90cdf4;
+    margin-bottom: 16px;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+  }
+
+  .events-list {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .events-list::-webkit-scrollbar { display: none; }
+
+  .event-group { margin-bottom: 20px; }
+
+  .event-day {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .event-day.today { color: #90cdf4; }
+
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .event-time {
+    font-size: 11px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.45);
+    min-width: 52px;
+    padding-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .event-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #90cdf4;
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+
+  .event-title {
+    font-size: clamp(13px, 1.6vw, 16px);
+    font-weight: 300;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.4;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.6);
+  }
+
+  .no-events {
+    color: rgba(255,255,255,0.35);
+    font-size: 14px;
+    font-weight: 300;
+    font-style: italic;
+    padding: 16px 0;
+  }
+
+  /* Auth button — bottom right */
+  .auth-section {
+    padding-top: 16px;
+    flex-shrink: 0;
+  }
+
+  .auth-btn {
+    background: rgba(144,205,244,0.12);
+    border: 1px solid rgba(144,205,244,0.35);
+    color: #90cdf4;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+  }
+
+  .auth-btn:hover { background: rgba(144,205,244,0.22); }
+  .auth-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .status-msg {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="bg-next"></div>
+<div class="overlay"></div>
+
+<div class="layout">
+  <!-- Clock -->
+  <div class="left">
+    <div class="time">
+      <span id="hours">12</span>:<span id="minutes">00</span><span class="ampm" id="ampm">AM</span>
+    </div>
+    <div class="divider"></div>
+    <div class="date" id="date">Monday, January 1</div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="right">
+    <div class="section-label">Upcoming</div>
+    <div class="events-list" id="events-list">
+      <div class="no-events">Sign in to load calendar</div>
+    </div>
+    <div class="auth-section">
+      <button class="auth-btn" id="auth-btn" onclick="handleAuth()" disabled>Connect Google</button>
+      <div class="status-msg" id="status-msg">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Config ─────────────────────────────────────────────
+  const CLIENT_ID = '258174334068-fmb3e69songqkvl6athc3de0ov35s6b2.apps.googleusercontent.com';
+  const PHOTO_ALBUM_TITLE = ''; // Leave blank to use all photos, or set exact album name
+  const PHOTO_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
+  const CALENDAR_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
+  const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/photoslibrary.readonly';
+
+  // ── Clock ───────────────────────────────────────────────
+  function updateClock() {
+    const now = new Date();
+    let h = now.getHours();
+    const m = now.getMinutes();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    document.getElementById('hours').textContent = h;
+    document.getElementById('minutes').textContent = String(m).padStart(2,'0');
+    document.getElementById('ampm').textContent = ampm;
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    document.getElementById('date').textContent =
+      days[now.getDay()] + ', ' + months[now.getMonth()] + ' ' + now.getDate();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── Google Auth ─────────────────────────────────────────
+  let tokenClient;
+  let gapiInited = false;
+  let gisInited = false;
+  let accessToken = null;
+
+  function gapiLoaded() {
+    gapi.load('client', async () => {
+      await gapi.client.init({
+        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+      });
+      gapiInited = true;
+      maybeEnable();
+    });
+  }
+
+  function gisLoaded() {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      callback: async (resp) => {
+        if (resp.error) { setStatus('Auth error: ' + resp.error); return; }
+        accessToken = resp.access_token;
+        document.getElementById('auth-btn').style.display = 'none';
+        setStatus('');
+        await loadCalendar();
+        await loadPhotos();
+        setInterval(loadCalendar, CALENDAR_REFRESH_MS);
+        setInterval(rotatePhoto, PHOTO_INTERVAL_MS);
+      },
+    });
+    gisInited = true;
+    maybeEnable();
+  }
+
+  function maybeEnable() {
+    if (gapiInited && gisInited) {
+      document.getElementById('auth-btn').disabled = false;
+      setStatus('Tap to connect');
+    }
+  }
+
+  function handleAuth() {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  }
+
+  function setStatus(msg) {
+    document.getElementById('status-msg').textContent = msg;
+  }
+
+  // ── Google Calendar ─────────────────────────────────────
+  async function loadCalendar() {
+    try {
+      const now = new Date();
+      const weekOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const resp = await gapi.client.calendar.events.list({
+        calendarId: 'primary',
+        timeMin: now.toISOString(),
+        timeMax: weekOut.toISOString(),
+        showDeleted: false,
+        singleEvents: true,
+        maxResults: 20,
+        orderBy: 'startTime',
+      });
+      renderEvents(resp.result.items || []);
+    } catch(e) {
+      setStatus('Calendar error');
+    }
+  }
+
+  function renderEvents(events) {
+    const list = document.getElementById('events-list');
+    if (!events.length) {
+      list.innerHTML = '<div class="no-events">No upcoming events</div>';
+      return;
+    }
+    const today = new Date(); today.setHours(0,0,0,0);
+    const tomorrow = new Date(today.getTime() + 86400000);
+    const groups = {};
+    events.forEach(ev => {
+      const start = ev.start.dateTime ? new Date(ev.start.dateTime) : new Date(ev.start.date + 'T00:00:00');
+      const d = new Date(start); d.setHours(0,0,0,0);
+      const key = d.toISOString();
+      if (!groups[key]) groups[key] = { date: d, events: [] };
+      groups[key].events.push({ ev, start });
+    });
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    list.innerHTML = Object.values(groups).map(g => {
+      const isToday = g.date.getTime() === today.getTime();
+      const isTomorrow = g.date.getTime() === tomorrow.getTime();
+      const label = isToday ? 'Today' : isTomorrow ? 'Tomorrow' :
+        days[g.date.getDay()] + ' ' + months[g.date.getMonth()] + ' ' + g.date.getDate();
+      const evHTML = g.events.map(({ ev, start }) => {
+        const isAllDay = !ev.start.dateTime;
+        const timeStr = isAllDay ? 'All day' :
+          start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        return `<div class="event-item">
+          <div class="event-time">${timeStr}</div>
+          <div class="event-dot"></div>
+          <div class="event-title">${ev.summary || '(No title)'}</div>
+        </div>`;
+      }).join('');
+      return `<div class="event-group">
+        <div class="event-day ${isToday ? 'today' : ''}">${label}</div>
+        ${evHTML}
+      </div>`;
+    }).join('');
+  }
+
+  // ── Google Photos ───────────────────────────────────────
+  let photoUrls = [];
+  let photoIndex = 0;
+  let bgCurrent = document.getElementById('bg');
+  let bgNext = document.getElementById('bg-next');
+
+  async function loadPhotos() {
+    try {
+      setStatus('Loading photos...');
+      let url = 'https://photoslibrary.googleapis.com/v1/mediaItems?pageSize=100';
+
+      // If album title specified, find it first
+      if (PHOTO_ALBUM_TITLE) {
+        const albumResp = await fetch('https://photoslibrary.googleapis.com/v1/albums?pageSize=50', {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        });
+        const albumData = await albumResp.json();
+        const album = (albumData.albums || []).find(a => a.title === PHOTO_ALBUM_TITLE);
+        if (album) {
+          const searchResp = await fetch('https://photoslibrary.googleapis.com/v1/mediaItems:search', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ albumId: album.id, pageSize: 100 })
+          });
+          const searchData = await searchResp.json();
+          photoUrls = (searchData.mediaItems || [])
+            .filter(i => i.mimeType && i.mimeType.startsWith('image/'))
+            .map(i => i.baseUrl + '=w1920-h1080-c');
+        }
+      } else {
+        const resp = await fetch(url, {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        });
+        const data = await resp.json();
+        photoUrls = (data.mediaItems || [])
+          .filter(i => i.mimeType && i.mimeType.startsWith('image/'))
+          .map(i => i.baseUrl + '=w1920-h1080-c');
+      }
+
+      // Shuffle
+      photoUrls.sort(() => Math.random() - 0.5);
+
+      if (photoUrls.length) {
+        showPhoto(photoUrls[0]);
+        setStatus('');
+      } else {
+        setStatus('No photos found');
+      }
+    } catch(e) {
+      setStatus('Photo error');
+    }
+  }
+
+  function showPhoto(url) {
+    bgNext.style.backgroundImage = `url('${url}')`;
+    bgNext.style.opacity = '1';
+    bgNext.style.zIndex = '1';
+    bgCurrent.style.zIndex = '0';
+    setTimeout(() => {
+      bgCurrent.style.backgroundImage = `url('${url}')`;
+      bgNext.style.opacity = '0';
+    }, 2100);
+  }
+
+  function rotatePhoto() {
+    if (!photoUrls.length) return;
+    photoIndex = (photoIndex + 1) % photoUrls.length;
+    showPhoto(photoUrls[photoIndex]);
+  }
+</script>
+
+<script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+<script src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+</body>
+</html>
