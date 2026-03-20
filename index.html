@@ -242,13 +242,12 @@
   <!-- Calendar -->
   <div class="right">
     <div class="section-label">Upcoming</div>
-    <div class="events-list" id="events-list">
-      <div class="no-events">Sign in to load calendar</div>
-    </div>
-    <div class="auth-section">
-      <button class="auth-btn" id="auth-btn" onclick="handleAuth()" disabled>Connect Google</button>
-      <div class="status-msg" id="status-msg">Loading...</div>
-    </div>
+    <iframe 
+      src="https://calendar.google.com/calendar/embed?src=millie.zenishek%40gmail.com&ctz=America%2FChicago&mode=AGENDA&showTitle=0&showNav=0&showDate=0&showPrint=0&showTabs=0&showCalendars=0&showTz=0"
+      style="border:0;width:100%;height:85%;filter:invert(1) hue-rotate(180deg);border-radius:8px;"
+      frameborder="0"
+      scrolling="no">
+    </iframe>
   </div>
 </div>
 
@@ -332,10 +331,11 @@
   async function loadCalendar() {
     try {
       const now = new Date();
-      const weekOut = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      const weekOut = new Date(startOfToday.getTime() + 8 * 24 * 60 * 60 * 1000);
       const resp = await gapi.client.calendar.events.list({
         calendarId: 'primary',
-        timeMin: now.toISOString(),
+        timeMin: startOfToday.toISOString(),
         timeMax: weekOut.toISOString(),
         showDeleted: false,
         singleEvents: true,
