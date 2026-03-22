@@ -8,8 +8,10 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Get access token
         id: token
@@ -21,13 +23,21 @@ jobs:
             -d grant_type=refresh_token)
           echo "access_token=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")" >> $GITHUB_OUTPUT
 
+      - name: Debug albums
+        run: |
+          curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+            "https://photoslibrary.googleapis.com/v1/albums?pageSize=50" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          for a in data.get('albums', []):
+              print(a.get('title'), '-', a.get('id'))
+          "
+
       - name: Fetch photos from Tablet album
         run: |
-          # Get albums
           ALBUMS=$(curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
             "https://photoslibrary.googleapis.com/v1/albums?pageSize=50")
           
-          # Get album ID for "Tablet"
           ALBUM_ID=$(echo $ALBUMS | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
@@ -38,14 +48,12 @@ jobs:
                   break
           ")
           
-          # Get photos from album
           PHOTOS=$(curl -s -X POST \
             -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
             -H "Content-Type: application/json" \
             -d "{\"albumId\": \"$ALBUM_ID\", \"pageSize\": 100}" \
             "https://photoslibrary.googleapis.com/v1/mediaItems:search")
           
-          # Write photo URLs to JSON file
           echo $PHOTOS | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
