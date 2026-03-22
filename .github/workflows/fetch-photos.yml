@@ -29,7 +29,7 @@ jobs:
             "https://photoslibrary.googleapis.com/v1/sharedAlbums?pageSize=50" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
-          for a in data.get('albums', []):
+          for a in data.get('sharedAlbums', []):
               print(a.get('title'), '-', a.get('id'))
           "
 
@@ -41,7 +41,7 @@ jobs:
           ALBUM_ID=$(echo $ALBUMS | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
-          albums = data.get('albums', [])
+          albums = data.get('sharedAlbums', [])
           for a in albums:
               if a.get('title') == 'Tablet':
                   print(a['id'])
