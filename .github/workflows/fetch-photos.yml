@@ -26,7 +26,7 @@ jobs:
       - name: Debug albums
         run: |
           curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
-            "https://photoslibrary.googleapis.com/v1/albums?pageSize=50" | python3 -c "
+            "https://photoslibrary.googleapis.com/v1/sharedAlbums?pageSize=50" | python3 -c "
           import sys, json
           data = json.load(sys.stdin)
           for a in data.get('albums', []):
@@ -36,7 +36,7 @@ jobs:
       - name: Fetch photos from Tablet album
         run: |
           ALBUMS=$(curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
-            "https://photoslibrary.googleapis.com/v1/albums?pageSize=50")
+            "https://photoslibrary.googleapis.com/v1/sharedAlbums?pageSize=50")
           
           ALBUM_ID=$(echo $ALBUMS | python3 -c "
           import sys, json
