@@ -1,0 +1,63 @@
+name: Fetch Photos
+
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get access token
+        id: token
+        run: |
+          RESPONSE=$(curl -s -X POST https://oauth2.googleapis.com/token \
+            -d client_id=258174334068-fmb3e69songqkvl6athc3de0ov35s6b2.apps.googleusercontent.com \
+            -d client_secret=${{ secrets.GOOGLE_CLIENT_SECRET }} \
+            -d refresh_token=${{ secrets.GOOGLE_REFRESH_TOKEN }} \
+            -d grant_type=refresh_token)
+          echo "access_token=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")" >> $GITHUB_OUTPUT
+
+      - name: Fetch photos from Tablet album
+        run: |
+          # Get albums
+          ALBUMS=$(curl -s -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+            "https://photoslibrary.googleapis.com/v1/albums?pageSize=50")
+          
+          # Get album ID for "Tablet"
+          ALBUM_ID=$(echo $ALBUMS | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          albums = data.get('albums', [])
+          for a in albums:
+              if a.get('title') == 'Tablet':
+                  print(a['id'])
+                  break
+          ")
+          
+          # Get photos from album
+          PHOTOS=$(curl -s -X POST \
+            -H "Authorization: Bearer ${{ steps.token.outputs.access_token }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"albumId\": \"$ALBUM_ID\", \"pageSize\": 100}" \
+            "https://photoslibrary.googleapis.com/v1/mediaItems:search")
+          
+          # Write photo URLs to JSON file
+          echo $PHOTOS | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          items = data.get('mediaItems', [])
+          urls = [i['baseUrl'] + '=w1920-h1080-c' for i in items if i.get('mimeType','').startswith('image/')]
+          print(json.dumps({'photos': urls}))
+          " > photos.json
+
+      - name: Commit photos.json
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add photos.json
+          git diff --staged --quiet || git commit -m "Update photos"
+          git push
